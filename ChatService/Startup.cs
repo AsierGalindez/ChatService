@@ -48,6 +48,8 @@ namespace ChatService
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapHub<ChatHub>("/chat");
+                endpoints.MapHub<CardHub>("/cards");
+
             });
         }
     }
