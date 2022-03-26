@@ -4,10 +4,10 @@ using System.Threading.Tasks;
 
 namespace ChatService.Hubs
 {
-    public class CardHub: Hub
+    public class GameHub: Hub
     {
         private readonly IDictionary<string, UserConnection> _connections;
-        public CardHub(IDictionary<string, UserConnection> connections)
+        public GameHub(IDictionary<string, UserConnection> connections)
         {
             
             _connections = connections;
