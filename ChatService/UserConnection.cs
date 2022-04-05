@@ -7,7 +7,7 @@
         public int Player { get; set; }
         public bool Ready { get; set; }
         public string SignalrId { get; set; }
-      
+        public int PosicionDeVuelta { get; set; }
 
     }
 

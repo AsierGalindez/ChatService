@@ -32,6 +32,10 @@ namespace ChatService
                 });
             });
             services.AddSingleton<IDictionary<string, UserConnection>>(opts => new Dictionary<string, UserConnection>());
+            services.AddSingleton<Game>();
+
+
+
 
         }
 
@@ -50,7 +54,7 @@ namespace ChatService
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapHub<ChatHub>("/chat");
-                endpoints.MapHub<GameHub>("/game");
+                
 
             });
 

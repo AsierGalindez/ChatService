@@ -5,12 +5,11 @@ namespace ChatService
 {
     public class Game
     {
-
+        
+       
       
-        public int[] CleanCards(string[][] deck)
-            {
-                
-           
+        public int[][] CleanCards(string[][] deck)
+            {          
                 string[] jugador0 = deck[0];
                 int[] jugador0Int = new int[4];
                 string[] jugador1 = deck[1];
@@ -20,11 +19,8 @@ namespace ChatService
                 string[] jugador3 = deck[3];
                 int[] jugador3Int = new int[4];
 
-
-
                 for (int i = 0; i < 4; i++)
                 {
-
                     int cardInt = Int32.Parse(jugador0[i].Remove(0, 1));
                     if (cardInt == 3)
                     {
@@ -35,17 +31,12 @@ namespace ChatService
                         cardInt = 1;
                     }
                     jugador0Int[i] = cardInt;
-
                 }
-
                 Array.Sort(jugador0Int);
                 Array.Reverse(jugador0Int);
 
-
-
                 for (int i = 0; i < 4; i++)
                 {
-
                     int cardInt = Int32.Parse(jugador1[i].Remove(0, 1));
                     if (cardInt == 3)
                     {
@@ -58,7 +49,6 @@ namespace ChatService
                     jugador1Int[i] = cardInt;
 
                 }
-
                 Array.Sort(jugador1Int);
                 Array.Reverse(jugador1Int);
 
@@ -102,20 +92,25 @@ namespace ChatService
 
                 Array.Sort(jugador3Int);
                 Array.Reverse(jugador3Int);
-                int aMayor=Mayor(jugador0Int, jugador1Int, jugador2Int, jugador3Int);
 
-                int aPequenia = Pequenia(jugador0Int, jugador1Int, jugador2Int, jugador3Int);
 
-                int[] mayorPeque= new int[2] {aMayor, aPequenia};
+            int[][] cleandDeck = { jugador0Int, jugador1Int, jugador2Int, jugador3Int};
                 
-                return  mayorPeque;
+                return  cleandDeck;
 
 
             }
-        public int Mayor(int[] jugador0Int, int[] jugador1Int, int[] jugador2Int, int[] jugador3Int)
+        public int Mayor(int[][] cleanCards)
         {
             //comparar jugador 0 con jugador 2 para saber quien es el mejor
-
+            int[] jugador0Int;
+            int[] jugador1Int;
+            int[] jugador2Int;
+            int[] jugador3Int;
+            jugador0Int = cleanCards[0];
+            jugador1Int = cleanCards[1];
+            jugador2Int = cleanCards[2];
+            jugador3Int = cleanCards[3];
             int[] parTeamBest = new int[4];
             int[] oddTeamBest = new int[4];
             int posiPar = -1;
@@ -235,8 +230,16 @@ namespace ChatService
             
             
         }
-        public int Pequenia(int[] jugador0Int, int[] jugador1Int, int[] jugador2Int, int[] jugador3Int)
+        public int Pequenia(int[][] cleanCards)
         {
+            int[] jugador0Int;
+            int[] jugador1Int;
+            int[] jugador2Int;
+            int[] jugador3Int;
+            jugador0Int = cleanCards[0];
+            jugador1Int = cleanCards[1];
+            jugador2Int = cleanCards[2];
+            jugador3Int = cleanCards[3];
             //comparar jugador 0 con jugador 2 para saber quien es el mejor
             Array.Sort(jugador0Int);
             Array.Sort(jugador1Int);
@@ -356,6 +359,31 @@ namespace ChatService
                 return 1;
             }
 
+        }
+
+        public bool[] HayPares(int[][] cleanCards)
+        {
+            int[] jugador0Int;
+            int[] jugador1Int;
+            int[] jugador2Int;
+            int[] jugador3Int;
+            jugador0Int = cleanCards[0];
+            jugador1Int = cleanCards[1];
+            jugador2Int = cleanCards[2];
+            jugador3Int = cleanCards[3];
+            bool[] hayPares = new bool[4] { false, false, false, false };
+            for (int e = 0; e < 4; e++)
+            {
+
+                for (int i = 0; i < 3; i++)
+                {
+                    if (cleanCards[e][i] == cleanCards[e][i + 1])
+                    {
+                        hayPares[e] = true;
+                    }
+                }
+            }
+            return hayPares;
         }
 
 
