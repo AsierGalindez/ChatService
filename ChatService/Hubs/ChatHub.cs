@@ -176,7 +176,7 @@ namespace SignalRChat.Hubs
 
                 if (userConnection.Player == postre)//Si el que pasa es el postre pasamos de ronda.
                 {
-                    if(round == 3)
+                    if(round == 9)
                     {
                         await Clients.Group(userConnection.Room).SendAsync("Accountant", round);
                     }
@@ -201,13 +201,22 @@ namespace SignalRChat.Hubs
 
             }
         }
+        //CABIAR ROUND
+        public async Task ChangeRound(int round)
+        {
+             if (_connections.TryGetValue(Context.ConnectionId, out UserConnection userConnection))
+             { 
+                 round++;
+                 await Clients.Group(userConnection.Room).SendAsync("NextRound" , round);
+             }
+        }
+
         //ACCIÓN DE MUS, DESCARTES
         public async Task DropCards(string[] dropped, int postre)
         {
 
             if (_connections.TryGetValue(Context.ConnectionId, out UserConnection userConnection))
             {
-
                 string userActive = _connections.Values.Where(r => r.Room == userConnection.Room).Where(p => p.Player == postre).Select(s => s.SignalrId).FirstOrDefault();
                 int descartes = dropped.Count(c => c == "F000");
                 int pide = 4 - descartes;
@@ -226,25 +235,26 @@ namespace SignalRChat.Hubs
                         }
                     await Clients.Group(userConnection.Room).SendAsync("NewTurn", turn);
                 }
-
-
             }
         }
+        //ACCIÓN RECIBIR CARTAS
 
-
-
-        //ACCIÓN NO HAY MUS
-
-        public async Task NoMus(string[][]deck)
+        public async Task RecibirCartas(string[][] deck)
         {
             if (_connections.TryGetValue(Context.ConnectionId, out UserConnection userConnection))
             {
-                
-                    
-                await Clients.Group(userConnection.Room).SendAsync("NoMus");
-                _deck["baraja"] = deck;
-                _cleanDeck["barajaLimpia"] = _game.CleanCards(_deck["baraja"]);
+                _cleanDeck["barajaClean"] = _game.CleanCards(deck);
+            }
+        }
+        //ACCIÓN NO HAY MUS
 
+        public async Task NoMus()
+        {
+            if (_connections.TryGetValue(Context.ConnectionId, out UserConnection userConnection))
+            {
+                                 
+                await Clients.Group(userConnection.Room).SendAsync("NoMus");
+              
 
             }
         }
@@ -425,7 +435,7 @@ namespace SignalRChat.Hubs
                 bool[] hayPares=new bool[4];
                 hayPares = _game.HayPares(_cleanDeck["barajaClean"]);
                 
-                string[] hayParesString=new string[hayPares.Length];
+                string[] hayParesString=new string[4];
                 for (int i = 0; i < hayPares.Length; i++)
                 {
                     if (hayPares[i])
