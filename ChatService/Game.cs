@@ -702,6 +702,38 @@ namespace ChatService
                 }
             }
         }
+        public bool[] HayJuego(int[][] cleanCards)
+        {
+            bool[] hayJuego = new bool[4] { false, false, false, false };
+            for (int e = 0; e < 4; e++)
+            {
+                for (int i = 0; i < 4; i++)
+                {
+
+                    if (cleanCards[e][i] == 12)
+                    {
+                        cleanCards[e][i] = 10;
+                    }
+                    else if (cleanCards[e][i] == 11)
+                    {
+                        cleanCards[e][i] = 10;
+                    }
+                }
+            }
+            int[] juego = new int[4];
+
+
+            for (int e = 0; e < 4; e++)
+            {
+                juego[e] = Enumerable.Sum(cleanCards[e]);
+                if (juego[e] > 30)
+                {
+                    hayJuego[e] = true;
+                }
+            }
+            return hayJuego;
+        }
+
     }
 
 

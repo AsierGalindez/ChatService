@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using ChatService;
 using System.Linq;
 using System;
+using System.Threading;
 
 namespace SignalRChat.Hubs
 {
@@ -11,10 +12,9 @@ namespace SignalRChat.Hubs
     {
         
         private readonly string _botUser;
-        private readonly IDictionary<string, UserConnection> _connections;
-        
+        private readonly IDictionary<string, UserConnection> _connections;        
         private IDictionary<string, string[][]> _deck;
-        private IDictionary<string, int[][]> _cleanDeck;
+        private IDictionary<string, int[][]> _cleanDeck = new Dictionary<string, int[][]>();
         private readonly Game _game;
 
 
@@ -23,11 +23,8 @@ namespace SignalRChat.Hubs
             _botUser = "MyChat Bot";
             _connections = connections;
             _game = game;
-
+            
         }
-
-       
-
         public override Task OnDisconnectedAsync(Exception exception)
         {
             if (_connections.TryGetValue(Context.ConnectionId, out UserConnection userConnection))
@@ -105,12 +102,6 @@ namespace SignalRChat.Hubs
                 }
                 _cleanDeck["barajaLimpia"]=_game.CleanCards(deck);
             }
-
-
-          
-            
-
-
         }
         //Botón Ready. Cuando todos le dan el juego comienza y determina quien es el postre
         public async Task IsReady(bool ready)
@@ -148,7 +139,6 @@ namespace SignalRChat.Hubs
             }
         }
         //SETEAR PLAYERS EN NUEVAMANO
-
         public async Task NuevaMano()
         {
             if (_connections.TryGetValue(Context.ConnectionId, out UserConnection userConnection))
@@ -176,7 +166,7 @@ namespace SignalRChat.Hubs
 
                 if (userConnection.Player == postre)//Si el que pasa es el postre pasamos de ronda.
                 {
-                    if(round == 9)
+                    if(round == 7)
                     {
                         await Clients.Group(userConnection.Room).SendAsync("Accountant", round);
                     }
@@ -243,6 +233,7 @@ namespace SignalRChat.Hubs
         {
             if (_connections.TryGetValue(Context.ConnectionId, out UserConnection userConnection))
             {
+                
                 _cleanDeck["barajaClean"] = _game.CleanCards(deck);
             }
         }
@@ -260,7 +251,6 @@ namespace SignalRChat.Hubs
         }
 
         //ACCIÓN ENVIDO
-
         public async Task Bet(int bet)
         {
             if (_connections.TryGetValue(Context.ConnectionId, out UserConnection userConnection))
@@ -282,8 +272,7 @@ namespace SignalRChat.Hubs
         }
 
         //ACCION NO QUIERO
-
-        public async Task Fold(int contador)
+        public async Task Fold(int contador, int round)
         {
             if (_connections.TryGetValue(Context.ConnectionId, out UserConnection userConnection))
             {
@@ -298,14 +287,13 @@ namespace SignalRChat.Hubs
                     team = "blue";
                     await Clients.Group(userConnection.Room).SendAsync("Fold", contador, team);
                 }
-                
+                round++;
+                await Clients.Group(userConnection.Room).SendAsync("NextRound", round);
+
             }
         }
 
-
         //QUIERO
-
-
         public async Task Call(int bet, int contador)
         {
             if (_connections.TryGetValue(Context.ConnectionId, out UserConnection userConnection))
@@ -351,14 +339,14 @@ namespace SignalRChat.Hubs
         }
 
         //ACCION CONTARPIEDRAS
-        //MAYOR (s.Remove(0, 1)
 
-        public async Task AccountantMayor()
+        public async Task AccountantMayor(string[][]deck)
         {
             if (_connections.TryGetValue(Context.ConnectionId, out UserConnection userConnection))
             {
+                int[][]cleanDeck = _game.CleanCards(deck);
                             
-                int mayor = _game.Mayor(_cleanDeck["barajaClean"]);
+                int mayor = _game.Mayor(cleanDeck);
 
                 if (userConnection.Player % 2 == 0)
                 {
@@ -394,7 +382,7 @@ namespace SignalRChat.Hubs
         }
 
         //Cuenta de PEQUEÑA
-        public async Task AccountantPeque()
+        public async Task AccountantPeque(string[][] deck)
         {
             int peque = _game.Pequenia(_cleanDeck["barajaClean"]);
             if (_connections.TryGetValue(Context.ConnectionId, out UserConnection userConnection))
@@ -428,14 +416,16 @@ namespace SignalRChat.Hubs
         }
 
         //HAY PARES
-        public async Task HayPares(int postre)
+        public async Task HayPares(string[][] deck)
         {
             if (_connections.TryGetValue(Context.ConnectionId, out UserConnection userConnection))
             {
-                bool[] hayPares=new bool[4];
-                hayPares = _game.HayPares(_cleanDeck["barajaClean"]);
-                
-                string[] hayParesString=new string[4];
+                bool[] hayPares = new bool[4];
+                int[][] cleanDeck = _game.CleanCards(deck);
+                hayPares = _game.HayPares(cleanDeck);
+                await Clients.Group(userConnection.Room).SendAsync("boolPares", hayPares);
+
+                string[] hayParesString = new string[4];
                 for (int i = 0; i < hayPares.Length; i++)
                 {
                     if (hayPares[i])
@@ -447,15 +437,75 @@ namespace SignalRChat.Hubs
                         hayParesString[i] = "no tengo pares.";
                     }
                 }
-                for(int i = 0;i < 4; i++)
+                string[] userName = new string[4];
+                for (int i = 0; i < 4; i++)
                 {
-                    string userName = _connections.Values.Where(e => e.PosicionDeVuelta == i).Select(n => n.User).FirstOrDefault();
-                    await Clients.Group(userConnection.Room).SendAsync("ReceiveMessage", userName, hayParesString);
-                    System.Threading.Thread.Sleep(800);
+                    userName[i] = _connections.Values.Where(e => e.PosicionDeVuelta == i).Select(n => n.User).FirstOrDefault();
+
+                }
+                for (int i = 0; i < 4; i++)
+                {
+                    
+                    await Clients.Group(userConnection.Room).SendAsync("ReceiveMessage", userName[i], hayParesString[i]);
+                    Thread.Sleep(800);
+                }
+                if(!hayPares[0] && !hayPares[1] && !hayPares[2] && !hayPares[3])
+                {
+                    await Clients.Group(userConnection.Room).SendAsync("NextRound", 6);
+                }
+                else
+                {
+                    await Clients.Group(userConnection.Room).SendAsync("NextRound", 5);
                 }
             }
         }
 
+        //HAY JUEGO
+        public async Task HayJuego(string[][] deck)
+        {
+            if (_connections.TryGetValue(Context.ConnectionId, out UserConnection userConnection))
+            {
+                bool[] hayJuego = new bool[4];
+               
+                int[][] cleanDeck = _game.CleanCards(deck);            
+                hayJuego = _game.HayJuego(cleanDeck);
+                await Clients.Group(userConnection.Room).SendAsync("boolJuego", hayJuego);
 
+                string[] hayJuegoString = new string[4];
+                for (int i = 0; i < hayJuego.Length; i++)
+                {
+                    if (hayJuego[i])
+                    {
+                        hayJuegoString[i] = "Sí, tengo juego.";
+                    }
+                    else
+                    {
+                        hayJuegoString[i] = "no tengo juego.";
+                    }
+                }
+                string[] userName = new string[4];
+                for (int i = 0; i < 4; i++)
+                {
+                    userName[i] = _connections.Values.Where(e => e.PosicionDeVuelta == i).Select(n => n.User).FirstOrDefault();
+
+                }
+                for (int i = 0; i < 4; i++)
+                {       
+                    await Clients.Group(userConnection.Room).SendAsync("ReceiveMessage", userName[i], hayJuegoString);
+                    System.Threading.Thread.Sleep(800);
+                } 
+
+                if (!hayJuego[0] && !hayJuego[1] && !hayJuego[2] && !hayJuego[3])
+                {
+                    await Clients.Group(userConnection.Room).SendAsync("NextRound", 6);
+                }
+                else
+                {
+                    await Clients.Group(userConnection.Room).SendAsync("NextRound", 8);
+                }
+           
+            }
+          
+        }
     }   
 }
