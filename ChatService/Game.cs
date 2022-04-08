@@ -375,11 +375,11 @@ namespace ChatService
             }
             return hayPares;
         }
-        public int Pares(int[][] cleanCards, int accountant)
+        public int[] Pares(int[][] cleanCards, int accountant)
         {
             //quiero saber la besthand de cada equipo
 
-           
+            int[] winner = new int[2];
             int[] empate = new int[4] { 0, 0, 0, 0 };
             bool parTeamWin = false;
             bool oddTeamWin = false;
@@ -472,39 +472,46 @@ namespace ChatService
                         if (bestParesOddTeamPosi > bestParesParTeamPosi)
                         {
                             parTeamWin = true;
+                            winner[0] = 0;
                             Console.WriteLine("gana par team con empate");
+
                         }
                         else
                         {
+                            winner[0] = 1;
                             oddTeamWin = true;
                             Console.WriteLine("gana impar team con empate");
                         }
                     }
                     if (paresGanadores == bestParesOddTeam)
                     {
+                        winner[0] = 1;
                         oddTeamWin = true;
                         Console.WriteLine("gana impar team a pares");
                     }
                     else
                     {
+                        winner[0] = 0;
                         parTeamWin = true;
                         Console.WriteLine("gana par team a pares");
                     }
                 }
                 else if ((hayPares[0] || hayPares[2]))
                 {
+                    winner[0] = 0;
                     parTeamWin = true;
                     Console.WriteLine("par team gana pares");
                 }
                 else if ((hayPares[1] || hayPares[3]))
                 {
-
+                    winner[0] = 1;
                     oddTeamWin = true;
                     Console.WriteLine("impar team gana pares");
                 }
                 else
                 {
-                    return accountant;
+
+                    return winner;
                 }
                 if (parTeamWin)
                 {
@@ -512,7 +519,8 @@ namespace ChatService
                     int tercero = checkPares(cleanCards[2]);
                     int piedrasPares = mano + tercero;
                     accountant += piedrasPares;
-                    return accountant;
+                    winner[1]=accountant;
+                    return winner;
                 }
                 else
                 {
@@ -520,7 +528,8 @@ namespace ChatService
                     int postre = checkPares(cleanCards[3]);
                     int piedrasPares = segundo + postre;
                     accountant += piedrasPares;
-                    return accountant;
+                    winner[1] = accountant;
+                    return winner;
                 }
                 static int checkPares(int[] cards)
                 {
@@ -559,7 +568,7 @@ namespace ChatService
             }
             else
             {
-                return 0;
+                return winner;
             }
         }
         public int[] peleaPares(int[] mano0, int[] mano1)
@@ -730,8 +739,9 @@ namespace ChatService
             }
             return hayJuego;
         }
-        public int Juego(int[][] cleanCards, int accountant)
+        public int[] Juego(int[][] cleanCards, int accountant)
         {
+            int[] result = new int[2] { 0, 0 };
             int[] empate = new int[4] { 0, 0, 0, 0 };
             bool parTeamWin = false;
             bool oddTeamWin = false;
@@ -745,7 +755,6 @@ namespace ChatService
             {
                 for (int i = 0; i < 4; i++)
                 {
-
                     if (cleanCards[e][i] == 12)
                     {
                         cleanCards[e][i] = 10;
@@ -804,7 +813,6 @@ namespace ChatService
                         {
                             bestJuegoParTeam = juego[0];
                             bestJuegoParTeamPosi = 0;
-
                         }
                         else
                         {
@@ -863,7 +871,6 @@ namespace ChatService
                         int juegoGanador;
                         juegoGanador = peleaJuego(bestJuegoParTeam, bestJuegoOddTeam);
 
-
                         if (juegoGanador == bestJuegoOddTeam)
                         {
                             oddTeamWin = true;
@@ -874,7 +881,6 @@ namespace ChatService
                             parTeamWin = true;
                             Console.WriteLine("gana par team a juego");
                         }
-
                     }
                 }
                 else if ((hayJuego[0] || hayJuego[2]))
@@ -890,7 +896,7 @@ namespace ChatService
                 }
                 else
                 {
-                    return accountant;
+                    return result;
                 }
                 if (parTeamWin)
                 {
@@ -898,7 +904,9 @@ namespace ChatService
                     int tercero = checkJuego(juego[2]);
                     int piedrasPares = mano + tercero;
                     accountant += piedrasPares;
-                    return accountant;
+                    result[0] = 0;
+                    result[1] = accountant;
+                    return result;
                 }
                 else
                 {
@@ -906,7 +914,10 @@ namespace ChatService
                     int postre = checkJuego(juego[3]);
                     int piedrasPares = segundo + postre;
                     accountant += piedrasPares;
-                    return accountant;
+                    result[0] = 1;
+                    result[1] = accountant;
+
+                    return result;
                 }
                 static int checkJuego(int cards)
                 {
@@ -923,7 +934,7 @@ namespace ChatService
             }
             else
             {
-                return 0;
+                return result;
             }
         }
         public int peleaJuego(int juego0, int juego1)
@@ -953,8 +964,9 @@ namespace ChatService
                 return juego1;
             }
         }
-        public int Punto(int[][] cleanCards, int accountant)
+        public int[] Punto(int[][] cleanCards, int accountant)
         {
+            int[] result = new int[2];
             int bestPuntoPosi;
             for (int e = 0; e < 4; e++)
             {
@@ -984,13 +996,17 @@ namespace ChatService
             {
                 accountant += 1;
                 Console.WriteLine("par team gana al punto   " + accountant);
-                return accountant;
+                result[0] = 0;
+                result[1] = accountant;
+                return result;
             }
             else
             {
                 accountant += 1;
                 Console.WriteLine("impar team gana al punto   " + accountant);
-                return accountant;
+                result[0] = 1;
+                result[1] = accountant;
+                return result;
             }
 
         }
