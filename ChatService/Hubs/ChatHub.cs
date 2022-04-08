@@ -507,5 +507,8 @@ namespace SignalRChat.Hubs
             }
           
         }
+
+        //Cuenta de JUEGO
+
     }   
 }

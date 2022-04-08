@@ -358,7 +358,6 @@ namespace ChatService
             }
 
         }
-
         public bool[] HayPares(int[][] cleanCards)
         {
       
@@ -376,7 +375,6 @@ namespace ChatService
             }
             return hayPares;
         }
-
         public int Pares(int[][] cleanCards, int accountant)
         {
             //quiero saber la besthand de cada equipo
@@ -564,7 +562,6 @@ namespace ChatService
                 return 0;
             }
         }
-
         public int[] peleaPares(int[] mano0, int[] mano1)
         {
             int[] bestHand = new int[4];
@@ -732,6 +729,270 @@ namespace ChatService
                 }
             }
             return hayJuego;
+        }
+        public int Juego(int[][] cleanCards, int accountant)
+        {
+            int[] empate = new int[4] { 0, 0, 0, 0 };
+            bool parTeamWin = false;
+            bool oddTeamWin = false;
+            bool[] hayJuego = new bool[4] { false, false, false, false };
+            bool alguienJuego = false;
+            int bestJuegoParTeam = 0;
+            int bestJuegoOddTeam = 0;
+            int bestJuegoParTeamPosi;
+            int bestJuegoOddTeamPosi;
+            for (int e = 0; e < 4; e++)
+            {
+                for (int i = 0; i < 4; i++)
+                {
+
+                    if (cleanCards[e][i] == 12)
+                    {
+                        cleanCards[e][i] = 10;
+                    }
+                    else if (cleanCards[e][i] == 11)
+                    {
+                        cleanCards[e][i] = 10;
+                    }
+                }
+            }
+            int[] juego = new int[4];
+
+
+            for (int e = 0; e < 4; e++)
+            {
+                juego[e] = Enumerable.Sum(cleanCards[e]);
+                if (juego[e] > 30)
+                {
+                    hayJuego[e] = true;
+                }
+            }
+            foreach (var cards in hayJuego)
+            {
+                if (cards)
+                {
+                    alguienJuego = true;
+                }
+            }
+            if (alguienJuego)
+            {
+
+                if ((hayJuego[0] || hayJuego[2]) && (hayJuego[1] || hayJuego[3]))
+                {
+                    if (hayJuego[0] && hayJuego[2])
+                    {
+                        if (juego[0] == juego[2])
+                        {
+                            bestJuegoParTeamPosi = 0;
+                        }
+                        else
+                        {
+                            bestJuegoParTeam = peleaJuego(juego[0], juego[2]);
+                            if (bestJuegoParTeam == juego[0])
+                            {
+                                bestJuegoParTeamPosi = 0;
+                            }
+                            else
+                            {
+                                bestJuegoParTeamPosi = 2;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        if (hayJuego[0])
+                        {
+                            bestJuegoParTeam = juego[0];
+                            bestJuegoParTeamPosi = 0;
+
+                        }
+                        else
+                        {
+                            bestJuegoParTeam = juego[2];
+                            bestJuegoParTeamPosi = 2;
+                        }
+                    }
+                    if (hayJuego[1] && hayJuego[3])
+                    {
+                        if (juego[1] == juego[3])
+                        {
+                            bestJuegoOddTeamPosi = 1;
+                        }
+                        else
+                        {
+                            bestJuegoOddTeam = peleaJuego(juego[1], juego[3]);
+                            if (bestJuegoOddTeam == juego[1])
+                            {
+                                bestJuegoOddTeamPosi = 1;
+                            }
+                            else
+                            {
+                                bestJuegoOddTeamPosi = 3;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        if (hayJuego[1])
+                        {
+                            bestJuegoOddTeam = juego[1];
+                            bestJuegoOddTeamPosi = 1;
+
+                        }
+                        else
+                        {
+                            bestJuegoOddTeam = juego[3];
+                            bestJuegoOddTeamPosi = 3;
+                        }
+                    }
+                    if (bestJuegoParTeam == bestJuegoOddTeam)
+                    {
+                        if (bestJuegoParTeamPosi < bestJuegoOddTeamPosi)
+                        {
+                            parTeamWin = true;
+                            Console.WriteLine("gana par team a juego con empate");
+                        }
+                        else
+                        {
+                            oddTeamWin = true;
+                            Console.WriteLine("gana impar team a juego con empate");
+                        }
+                    }
+                    else
+                    {
+                        int juegoGanador;
+                        juegoGanador = peleaJuego(bestJuegoParTeam, bestJuegoOddTeam);
+
+
+                        if (juegoGanador == bestJuegoOddTeam)
+                        {
+                            oddTeamWin = true;
+                            Console.WriteLine("gana impar team a juego");
+                        }
+                        else
+                        {
+                            parTeamWin = true;
+                            Console.WriteLine("gana par team a juego");
+                        }
+
+                    }
+                }
+                else if ((hayJuego[0] || hayJuego[2]))
+                {
+                    parTeamWin = true;
+                    Console.WriteLine("par team gana juego");
+                }
+                else if ((hayJuego[1] || hayJuego[3]))
+                {
+
+                    oddTeamWin = true;
+                    Console.WriteLine("impar team gana juego");
+                }
+                else
+                {
+                    return accountant;
+                }
+                if (parTeamWin)
+                {
+                    int mano = checkJuego(juego[0]);
+                    int tercero = checkJuego(juego[2]);
+                    int piedrasPares = mano + tercero;
+                    accountant += piedrasPares;
+                    return accountant;
+                }
+                else
+                {
+                    int segundo = checkJuego(juego[1]);
+                    int postre = checkJuego(juego[3]);
+                    int piedrasPares = segundo + postre;
+                    accountant += piedrasPares;
+                    return accountant;
+                }
+                static int checkJuego(int cards)
+                {
+                    if (cards == 31)
+                    {
+                        return 3;
+                    }
+                    else if (cards > 31)
+                    {
+                        return 2;
+                    }
+                    else return 0;
+                }
+            }
+            else
+            {
+                return 0;
+            }
+        }
+        public int peleaJuego(int juego0, int juego1)
+        {
+            if (juego0 == 31 && juego1 != 31)
+            {
+                return juego0;
+            }
+            else if (juego1 == 31 && juego0 != 31)
+            {
+                return juego1;
+            }
+            else if (juego0 == 32 && juego1 != 32)
+            {
+                return juego0;
+            }
+            else if (juego1 == 32 && juego0 != 32)
+            {
+                return juego1;
+            }
+            else if (juego0 > juego1)
+            {
+                return juego0;
+            }
+            else
+            {
+                return juego1;
+            }
+        }
+        public int Punto(int[][] cleanCards, int accountant)
+        {
+            int bestPuntoPosi;
+            for (int e = 0; e < 4; e++)
+            {
+                for (int i = 0; i < 4; i++)
+                {
+
+                    if (cleanCards[e][i] == 12)
+                    {
+                        cleanCards[e][i] = 10;
+                    }
+                    else if (cleanCards[e][i] == 11)
+                    {
+                        cleanCards[e][i] = 10;
+                    }
+                }
+            }
+            int[] juego = new int[4];
+
+
+            for (int e = 0; e < 4; e++)
+            {
+                juego[e] = Enumerable.Sum(cleanCards[e]);
+            }
+
+            bestPuntoPosi = Array.IndexOf(juego, Enumerable.Max(juego));
+            if (bestPuntoPosi == 0 || bestPuntoPosi == 2)
+            {
+                accountant += 1;
+                Console.WriteLine("par team gana al punto   " + accountant);
+                return accountant;
+            }
+            else
+            {
+                accountant += 1;
+                Console.WriteLine("impar team gana al punto   " + accountant);
+                return accountant;
+            }
+
         }
 
     }
