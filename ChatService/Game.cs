@@ -6,8 +6,7 @@ namespace ChatService
 {
     public class Game
     {
-        
-       
+         
       
         public int[][] CleanCards(string[][] deck)
             {          

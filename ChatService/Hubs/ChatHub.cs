@@ -66,7 +66,7 @@ namespace SignalRChat.Hubs
 
             return Clients.Group(room).SendAsync("UsersInRoom", users);
         }
-
+        //ACCIÓN ASIGNAR PLAYERS
         public async Task SetPlayer (int player)
         {
             if (_connections.TryGetValue(Context.ConnectionId, out UserConnection userConnection))
@@ -74,6 +74,16 @@ namespace SignalRChat.Hubs
                 userConnection.Player = player;
 
                 await Clients.Group(userConnection.Room).SendAsync("ReceivePlayerNumber", userConnection.User, userConnection.Player);
+            }
+        }
+        //ACCIÓN ASIGNAR AVATAR
+        public async Task SetAvatar (int avatar)
+        {
+            if (_connections.TryGetValue(Context.ConnectionId, out UserConnection userConnection))
+            {
+                userConnection.Avatar = avatar;
+
+                await Clients.Group(userConnection.Room).SendAsync("ReceivePlayerAvatar", userConnection.Player, userConnection.Avatar);
             }
         }
         // ACCIÓN DE DAR CARTAS
@@ -166,15 +176,8 @@ namespace SignalRChat.Hubs
 
                 if (userConnection.Player == postre)//Si el que pasa es el postre pasamos de ronda.
                 {
-                    if(round == 7)
-                    {
-                        await Clients.Group(userConnection.Room).SendAsync("Accountant", round);
-                    }
-                    else
-                    {
                         round++;
-                        await Clients.Group(userConnection.Room).SendAsync("NextRound" , round);
-                    }
+                        await Clients.Group(userConnection.Room).SendAsync("NextRound" , round);                   
                 }
                 else
                 {
@@ -336,14 +339,15 @@ namespace SignalRChat.Hubs
 
         }
 
-        //ACCION CONTARPIEDRAS
-        public async Task AccountantMayor(string[][]deck)
+        //ACCION cuenta de mayor
+        public async Task AccountantMayor(string[][]deck, int contador, int contadorRed, int contadorBlue)
         {
             if (_connections.TryGetValue(Context.ConnectionId, out UserConnection userConnection))
             {
                 int[][]cleanDeck = _game.CleanCards(deck);
                             
                 int mayor = _game.Mayor(cleanDeck);
+               
 
                 if (userConnection.Player % 2 == 0)
                 {
@@ -351,35 +355,49 @@ namespace SignalRChat.Hubs
 
                     if (mayor == 0)
                     {
-
+                        
+                        contadorRed += contador;
+                        await Clients.Group(userConnection.Room).SendAsync("TeamAccountants", contadorRed, contadorBlue);
                         await Clients.Group(userConnection.Room).SendAsync("ReceiveMessage", _botUser, $"El equipo Rojo gana la mayor.");
+                        await Clients.Group(userConnection.Room).SendAsync("NextRound", 11);
 
                     }
                     else
                     {
+                        contadorBlue += contador;
+                        await Clients.Group(userConnection.Room).SendAsync("TeamAccountants", contadorRed, contadorBlue);
                         await Clients.Group(userConnection.Room).SendAsync("ReceiveMessage", _botUser, $"El equipo Azul gana la mayor.");
+                        await Clients.Group(userConnection.Room).SendAsync("NextRound", 11);
                     }
                 }
                 else
                 {
                     if (mayor == 0)
                     {
-
+                        contadorBlue += contador;
+                        await Clients.Group(userConnection.Room).SendAsync("TeamAccountants", contadorRed, contadorBlue);
                         await Clients.Group(userConnection.Room).SendAsync("ReceiveMessage", _botUser, $"El equipo Azul gana la mayor.");
+                        await Clients.Group(userConnection.Room).SendAsync("NextRound", 11);
+
 
                     }
                     else
                     {
+                        contadorRed += contador;
+                        await Clients.Group(userConnection.Room).SendAsync("TeamAccountants", contadorRed, contadorBlue);
                         await Clients.Group(userConnection.Room).SendAsync("ReceiveMessage", _botUser, $"El equipo Rojo gana la mayor.");
+                        await Clients.Group(userConnection.Room).SendAsync("NextRound", 11);
                     }
                 }
             }
         }
 
         //Cuenta de PEQUEÑA
-        public async Task AccountantPeque(string[][] deck)
+        public async Task AccountantPeque(string[][] deck, int contador, int contadorRed, int contadorBlue)
         {
-            int peque = _game.Pequenia(_cleanDeck["barajaClean"]);
+            int[][] cleanDeck = _game.CleanCards(deck);
+            int peque = _game.Pequenia(cleanDeck);
+            
             if (_connections.TryGetValue(Context.ConnectionId, out UserConnection userConnection))
             {
 
@@ -388,11 +406,17 @@ namespace SignalRChat.Hubs
 
                     if (peque == 1)
                     {
+                        contadorRed += contador;
+                        await Clients.Group(userConnection.Room).SendAsync("TeamAccountants", contadorRed, contadorBlue);
                         await Clients.Group(userConnection.Room).SendAsync("ReceiveMessage", _botUser, $"El equipo Rojo gana la pequeña.");
+                        await Clients.Group(userConnection.Room).SendAsync("NextRound", 12);
                     }
                     else
                     {
+                        contadorBlue += contador;
+                        await Clients.Group(userConnection.Room).SendAsync("TeamAccountants", contadorRed, contadorBlue);
                         await Clients.Group(userConnection.Room).SendAsync("ReceiveMessage", _botUser, $"El equipo Azul gana la pequeña.");
+                        await Clients.Group(userConnection.Room).SendAsync("NextRound", 12);
                     }
 
                 }
@@ -400,16 +424,21 @@ namespace SignalRChat.Hubs
                 {
                     if (peque == 1)
                     {
+                        contadorBlue += contador;
+                        await Clients.Group(userConnection.Room).SendAsync("TeamAccountants", contadorRed, contadorBlue);
                         await Clients.Group(userConnection.Room).SendAsync("ReceiveMessage", _botUser, $"El equipo Azul gana la pequeña.");
+                        await Clients.Group(userConnection.Room).SendAsync("NextRound", 12);
                     }
                     else
                     {
+                        contadorRed += contador;
+                        await Clients.Group(userConnection.Room).SendAsync("TeamAccountants", contadorRed, contadorBlue);
                         await Clients.Group(userConnection.Room).SendAsync("ReceiveMessage", _botUser, $"El equipo Rojo gana la pequeña.");
+                        await Clients.Group(userConnection.Room).SendAsync("NextRound", 12);
                     }
                 }
             }
         }
-
         //HAY PARES
         public async Task HayPares(string[][] deck)
         {
@@ -418,7 +447,8 @@ namespace SignalRChat.Hubs
                 bool[] hayPares = new bool[4];
                 int[][] cleanDeck = _game.CleanCards(deck);
                 hayPares = _game.HayPares(cleanDeck);
-                await Clients.Group(userConnection.Room).SendAsync("boolPares", hayPares);
+                await Clients.Group(userConnection.Room).SendAsync("BoolPares", hayPares);
+
 
                 string[] hayParesString = new string[4];
                 for (int i = 0; i < hayPares.Length; i++)
@@ -441,7 +471,7 @@ namespace SignalRChat.Hubs
                 for (int i = 0; i < 4; i++)
                 {
                     
-                    await Clients.Group(userConnection.Room).SendAsync("ReceiveMessage", userName[i], hayParesString[i]);
+                    await Clients.Group(userConnection.Room).SendAsync("ReceiveMessage",  userName[i] ,hayParesString[i]);
                     Thread.Sleep(800);
                 }
                 if((!hayPares[0] && !hayPares[2]) || (!hayPares[1] && !hayPares[3]))
@@ -463,7 +493,7 @@ namespace SignalRChat.Hubs
                
                 int[][] cleanDeck = _game.CleanCards(deck);            
                 hayJuego = _game.HayJuego(cleanDeck);
-                await Clients.Group(userConnection.Room).SendAsync("boolJuego", hayJuego);
+                await Clients.Group(userConnection.Room).SendAsync("BoolJuego", hayJuego);
 
                 string[] hayJuegoString = new string[4];
                 for (int i = 0; i < hayJuego.Length; i++)
@@ -485,7 +515,7 @@ namespace SignalRChat.Hubs
                 }
                 for (int i = 0; i < 4; i++)
                 {       
-                    await Clients.Group(userConnection.Room).SendAsync("ReceiveMessage", userName[2], hayJuegoString[i]);
+                    await Clients.Group(userConnection.Room).SendAsync("ReceiveMessage", userName[i], hayJuegoString[i]);
                     Thread.Sleep(800);
                 } 
 
@@ -506,10 +536,11 @@ namespace SignalRChat.Hubs
           
         }
         //PARES
-        public async Task Pares(string[][] deck, int accountant)
+        public async Task Pares(string[][] deck, int accountant, int contadorRed, int contadorBlue)
         {
             if (_connections.TryGetValue(Context.ConnectionId, out UserConnection userConnection))
             {
+
                 int[][] cleanDeck = _game.CleanCards(deck);
                 int[] pares = new int[2];
                 pares = _game.Pares(cleanDeck, accountant);
@@ -517,44 +548,105 @@ namespace SignalRChat.Hubs
                 {
                     if (pares[0] == 0)
                     {
-                        await Clients.Group(userConnection.Room).SendAsync("ReceiveMessage", _botUser, $"El equipo Azul gana a juego.");
-                        await Clients.Group(userConnection.Room).SendAsync("ContadorAzul", pares[1]);
+                        await Clients.Group(userConnection.Room).SendAsync("ReceiveMessage", _botUser, $"El equipo Azul gana a pares.");
+                        contadorBlue += accountant + pares[1];
+                        await Clients.Group(userConnection.Room).SendAsync("TeamAccountants", contadorRed, contadorBlue);
+                        await Clients.Group(userConnection.Room).SendAsync("NextRound", 13);
+
+
                     }
                     else
                     {
-                        await Clients.Group(userConnection.Room).SendAsync("ReceiveMessage", _botUser, $"El equipo Rojo gana a juego.");
-                        await Clients.Group(userConnection.Room).SendAsync("ContadorRojo", pares[1]);
+                        await Clients.Group(userConnection.Room).SendAsync("ReceiveMessage", _botUser, $"El equipo Rojo gana a pares.");
+                        contadorRed += accountant + pares[1];
+                        await Clients.Group(userConnection.Room).SendAsync("TeamAccountants", contadorRed, contadorBlue);
+                        await Clients.Group(userConnection.Room).SendAsync("NextRound", 13);
+
+                    }
+                }
+                else
+                {
+                    if (pares[0] == 1)
+                    {
+                        await Clients.Group(userConnection.Room).SendAsync("ReceiveMessage", _botUser, $"El equipo Azul gana a pares.");
+                        contadorBlue += accountant + pares[1];
+                        await Clients.Group(userConnection.Room).SendAsync("TeamAccountants", contadorRed, contadorBlue);
+                        await Clients.Group(userConnection.Room).SendAsync("NextRound", 13);
+
+                    }
+                    else
+                    {
+                        await Clients.Group(userConnection.Room).SendAsync("ReceiveMessage", _botUser, $"El equipo Rojo gana a pares.");
+                        contadorRed += accountant + pares[1];
+                        await Clients.Group(userConnection.Room).SendAsync("TeamAccountants", contadorRed, contadorBlue);
+                        await Clients.Group(userConnection.Room).SendAsync("NextRound", 13);
                     }
                 }
 
             }
         }
         //Cuenta de JUEGO
-        public async Task Juego(string[][] deck, int accountant)
+        public async Task Juego(string[][] deck, int accountant, int contadorRed, int contadorBlue)
         {
             if (_connections.TryGetValue(Context.ConnectionId, out UserConnection userConnection))
             {
                 int[][] cleanDeck = _game.CleanCards(deck);
                 int[] juego = new int[2];
                 juego = _game.Juego(cleanDeck, accountant);
-                if (userConnection.Player % 2 == 0)
+                if (juego[1] == 0)
                 {
-                    if (juego[0] == 0)
+                    await Clients.Group(userConnection.Room).SendAsync("NextRound", 15);
+                }
+                else
+                {
+
+                    if (userConnection.Player % 2 == 0)
                     {
-                        await Clients.Group(userConnection.Room).SendAsync("ReceiveMessage", _botUser, $"El equipo Azul gana a juego.");
-                        await Clients.Group(userConnection.Room).SendAsync("ContadorAzul", juego[1]);
+                        if (juego[0] == 0)
+                        {
+                            await Clients.Group(userConnection.Room).SendAsync("ReceiveMessage", _botUser, $"El equipo Azul gana a juego.");
+                            contadorBlue +=  juego[1];
+                            await Clients.Group(userConnection.Room).SendAsync("TeamAccountants", contadorRed, contadorBlue);
+                            
+                            await Clients.Group(userConnection.Room).SendAsync("NextJuego");
+                        }
+                        else
+                        {
+                            await Clients.Group(userConnection.Room).SendAsync("ReceiveMessage", _botUser, $"El equipo Rojo gana a juego.");
+                            
+                            contadorRed += juego[1];
+                            await Clients.Group(userConnection.Room).SendAsync("TeamAccountants", contadorRed, contadorBlue);
+
+                            await Clients.Group(userConnection.Room).SendAsync("NextJuego");
+                        }
                     }
+                    
                     else
                     {
-                        await Clients.Group(userConnection.Room).SendAsync("ReceiveMessage", _botUser, $"El equipo Rojo gana a juego.");
-                        await Clients.Group(userConnection.Room).SendAsync("ContadorRojo", juego[1]);
-                    }
-                }              
+                        if (juego[0] == 1)
+                        {
+                            await Clients.Group(userConnection.Room).SendAsync("ReceiveMessage", _botUser, $"El equipo Azul gana a juego.");
+                            contadorBlue += juego[1];
+                            await Clients.Group(userConnection.Room).SendAsync("TeamAccountants", contadorRed, contadorBlue);
 
+                            await Clients.Group(userConnection.Room).SendAsync("NextJuego");
+                        }
+                        else
+                        {
+                            await Clients.Group(userConnection.Room).SendAsync("ReceiveMessage", _botUser, $"El equipo Rojo gana a juego.");
+
+                            contadorRed += juego[1];
+                            await Clients.Group(userConnection.Room).SendAsync("TeamAccountants", contadorRed, contadorBlue);
+
+                            await Clients.Group(userConnection.Room).SendAsync("NextJuego");
+                        }
+                    }
+
+                }
             }
         }
         //PUNTO
-        public async Task Punto(string[][] deck, int accountant)
+        public async Task Punto(string[][] deck, int accountant, int contadorRed, int contadorBlue)
         {
             if (_connections.TryGetValue(Context.ConnectionId, out UserConnection userConnection))
             {
@@ -563,11 +655,15 @@ namespace SignalRChat.Hubs
                 juego = _game.Punto(cleanDeck, accountant);
                 if(juego[0] == 0)
                 {
-                    await Clients.Group(userConnection.Room).SendAsync("ContadorAzul", juego[1]);
+                    contadorBlue += juego[1];
+                    await Clients.Group(userConnection.Room).SendAsync("TeamAccountants", contadorRed, contadorBlue);
+                    await Clients.Group(userConnection.Room).SendAsync("NextJuego");
                 }
                 else
                 {
-                    await Clients.Group(userConnection.Room).SendAsync("ContadorRojo", juego[1]);
+                    contadorRed += juego[1];
+                    await Clients.Group(userConnection.Room).SendAsync("TeamAccountants", contadorRed, contadorBlue);             
+                    await Clients.Group(userConnection.Room).SendAsync("NextJuego");
                 }
             }
         }
@@ -583,7 +679,7 @@ namespace SignalRChat.Hubs
         //PARTIDA TERMINADA
 
         //ORDAGO
-        public async Task Ordago(int contador, string  )
+        public async Task Ordago(int contador, string team)
         {
 
         }
@@ -766,6 +862,8 @@ namespace SignalRChat.Hubs
             if (_connections.TryGetValue(Context.ConnectionId, out UserConnection userConnection))
             {
                 await Clients.Group(userConnection.Room).SendAsync("LevantarCartas", deck);
+                await Clients.Group(userConnection.Room).SendAsync("NextRound", 10);
+
             }
         }
 

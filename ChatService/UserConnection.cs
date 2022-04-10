@@ -8,6 +8,7 @@
         public bool Ready { get; set; }
         public string SignalrId { get; set; }
         public int PosicionDeVuelta { get; set; }
+        public int Avatar { get; set; }
 
     }
 
